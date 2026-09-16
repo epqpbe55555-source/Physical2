@@ -283,6 +283,22 @@ svg#vpsvg{width:100%; height:auto; background:var(--paper); border-radius:8px;}
 .map-reader p{font-size:14.5px; color:#33403c; margin:0;}
 .map-reader .placeholder{color:#8b958f; font-style:italic;}
 
+/* ---------- LEVEL TABS (Flashcards & Quiz) ---------- */
+.level-tabs{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:22px;}
+.level-btn{
+  font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13.5px;
+  background:#fff; color:var(--teal); border:1.5px solid var(--line); border-radius:999px;
+  padding:9px 18px 9px 16px; cursor:pointer; transition:background .15s ease, color .15s ease, border-color .15s ease;
+  display:inline-flex; align-items:center; gap:6px;
+}
+.level-btn .lvl-dot{width:8px;height:8px;border-radius:50%; background:var(--line); flex:none;}
+.level-btn[data-level="easy"] .lvl-dot{background:var(--right);}
+.level-btn[data-level="medium"] .lvl-dot{background:var(--amber);}
+.level-btn[data-level="hard"] .lvl-dot{background:var(--wrong);}
+.level-btn:hover{border-color:var(--accent);}
+.level-btn.active{background:var(--teal); color:var(--paper); border-color:var(--teal);}
+.level-btn .lvl-count{opacity:.75; font-family:'IBM Plex Mono',monospace; font-size:11px;}
+
 /* ---------- FLASHCARDS ---------- */
 .flash-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:16px;}
 .flash-card{perspective:1200px; height:150px; cursor:pointer;}
@@ -461,7 +477,12 @@ footer{
     <div class="section-head">
       <p class="eyebrow">Section 04</p>
       <h2>Flash Cards</h2>
-      <p>Tap a card to flip it between question and answer.</p>
+      <p>Tap a card to flip it between question and answer. Choose a difficulty level below.</p>
+    </div>
+    <div class="level-tabs" id="flashLevelTabs">
+      <button class="level-btn active" data-level="easy"><span class="lvl-dot"></span>Level 1 · Easy <span class="lvl-count">(60)</span></button>
+      <button class="level-btn" data-level="medium"><span class="lvl-dot"></span>Level 2 · Medium <span class="lvl-count">(50)</span></button>
+      <button class="level-btn" data-level="hard"><span class="lvl-dot"></span>Level 3 · Hard <span class="lvl-count">(40)</span></button>
     </div>
     <div class="flash-grid" id="flashGrid"></div>
   </section>
@@ -471,7 +492,12 @@ footer{
     <div class="section-head">
       <p class="eyebrow">Section 05</p>
       <h2>Quiz Bank</h2>
-      <p>The correct option is placed randomly each time you load or restart the quiz.</p>
+      <p>The correct option is placed randomly each time you load or restart the quiz. Choose a difficulty level below.</p>
+    </div>
+    <div class="level-tabs" id="quizLevelTabs">
+      <button class="level-btn active" data-level="easy"><span class="lvl-dot"></span>Level 1 · Easy <span class="lvl-count">(60)</span></button>
+      <button class="level-btn" data-level="medium"><span class="lvl-dot"></span>Level 2 · Medium <span class="lvl-count">(50)</span></button>
+      <button class="level-btn" data-level="hard"><span class="lvl-dot"></span>Level 3 · Hard <span class="lvl-count">(40)</span></button>
     </div>
     <div class="quiz-top">
       <div class="score-box">Score: <span id="scoreVal">0</span> / <span id="scoreTotal">0</span></div>
@@ -672,173 +698,346 @@ function buildBranch(id, arr){
 buildBranch('branchLiquid', mapTopics.liquid);
 buildBranch('branchSolid', mapTopics.solid);
 
-/* ---------------- FLASH CARDS ---------------- */
-const flashcards = [
-  {q:'What is the critical temperature?', a:'The temperature above which a gas cannot be liquefied, no matter how much pressure is applied.'},
-  {q:'What is the critical pressure?', a:'The pressure required to liquefy a gas exactly at its critical temperature.'},
-  {q:'Critical temperature & pressure of water?', a:'374°C (647 K) and 218 atm.'},
-  {q:'Critical temperature & pressure of helium?', a:'5.2 K and 2.26 atm.'},
-  {q:'What is a propellant in a pharmaceutical aerosol?', a:'A material that stays liquid under the canister\'s internal pressure but becomes a gas at atmospheric pressure.'},
-  {q:'Why have CFCs/HFCs been phased out of aerosols?', a:'Environmental concern over ozone depletion — nitrogen and carbon dioxide are used instead.'},
-  {q:'How does ethyl chloride produce local anesthesia?', a:'It cools sharply on expansion, freezing the skin it is sprayed on.'},
-  {q:'Define equilibrium vapor pressure.', a:'The pressure of a saturated vapor once the rate of condensation equals the rate of vaporization at a given temperature.'},
-  {q:'Does air above a liquid change equilibrium vapor pressure?', a:'No — it slows the rate of evaporation but not the equilibrium pressure itself.'},
+/* ---------------- FLASH CARDS (3 difficulty levels) ---------------- */
+const flashcardsByLevel = {
+easy: [
+  {q:'What happens to a gas\'s kinetic energy when it is cooled?', a:'It loses some of its kinetic energy in the form of heat, and molecular velocity decreases.'},
+  {q:'Which force brings gas molecules into the liquid state when pressure is applied?', a:'van der Waals interaction forces.'},
+  {q:'Why do liquids occupy a definite volume?', a:'Because of van der Waals forces — liquids are denser than gases and occupy a definite volume.'},
+  {q:'What two factors determine the transitions between gas, liquid, and solid?', a:'Temperature and pressure.'},
+  {q:'Define critical temperature.', a:'The temperature above which a gas cannot be liquefied, no matter how much pressure is applied.'},
+  {q:'Define critical pressure.', a:'The pressure required to liquefy a gas at its critical temperature.'},
+  {q:'What is the critical temperature of water?', a:'374°C (647 K).'},
+  {q:'What is the critical pressure of water?', a:'218 atm.'},
+  {q:'What is the critical temperature of helium?', a:'5.2 K.'},
+  {q:'What is the critical pressure of helium?', a:'2.26 atm.'},
+  {q:'What condition must be maintained inside a closed chamber to keep a gas liquefied under pressure?', a:'The chamber must be kept below the gas\'s critical temperature.'},
+  {q:'What happens when pressure is reduced on a liquefied gas in an aerosol?', a:'The molecules expand and the liquid reverts to a gas.'},
+  {q:'Define a propellant.', a:'A material that is liquid under the pressure inside the aerosol container but forms a gas at normal atmospheric conditions.'},
+  {q:'How is the drug–propellant mixture expelled from an aerosol container?', a:'By depressing a valve — excess internal pressure expels the mixture.'},
+  {q:'What happens to a nonvolatile drug as it leaves the aerosol valve orifice?', a:'It forms a fine spray while the liquid propellant vaporizes off.'},
+  {q:'Name two classes of chemicals traditionally used as aerosol propellants.', a:'Chlorofluorocarbons (CFCs) and hydrofluorocarbons (HFCs).'},
+  {q:'Why is the use of CFCs and HFCs tightly regulated?', a:'Environmental concern over ozone depletion.'},
+  {q:'Which two gases have increasingly replaced CFCs/HFCs as propellants?', a:'Nitrogen and carbon dioxide.'},
+  {q:'Give one advantage of aerosol formulation mentioned in the lecture.', a:'Antiseptic materials can be sprayed onto abraded skin with minimum discomfort to the patient.'},
+  {q:'What is ethyl chloride used for pharmaceutically?', a:'A local anesthetic spray, used for athletic injuries.'},
+  {q:'How does ethyl chloride produce local anesthesia?', a:'It cools sufficiently on expansion to freeze the tissue it is sprayed on.'},
+  {q:'Define equilibrium (saturated) vapor pressure.', a:'The pressure of a saturated vapor above a liquid when the rate of condensation equals the rate of vaporization.'},
+  {q:'What instrument records vapor pressure, and in what units?', a:'A manometer; in millimeters of mercury (mmHg).'},
+  {q:'Does air above a liquid affect its equilibrium vapor pressure?', a:'No — it decreases the rate of evaporation but not the equilibrium vapor pressure.'},
+  {q:'Name the four liquids plotted in Fig. 2-5 (vapor pressure vs. temperature).', a:'Acetone, benzene, water, and acetic acid.'},
+  {q:'In the Clausius–Clapeyron equation, what does ΔHᵥ represent?', a:'The molar heat of vaporization.'},
   {q:'Write the Clausius–Clapeyron equation.', a:'log(p₂/p₁) = ΔHᵥ(T₂−T₁) / (2.303 R T₁T₂)'},
-  {q:'What does ΔHᵥ represent?', a:'The molar heat of vaporization — heat absorbed by 1 mole of liquid vaporizing.'},
-  {q:'Heat of vaporization of water at 100°C vs 180°C?', a:'539 cal/g at 100°C, 478 cal/g at 180°C.'},
-  {q:'What happens to heat of vaporization at the critical temperature?', a:'It becomes zero — liquid and gas are no longer distinguishable.'},
+  {q:'What is the heat of vaporization of water at 100°C?', a:'539 cal/g.'},
+  {q:'What is the heat of vaporization of water at 180°C?', a:'478 cal/g.'},
+  {q:'What happens to the heat of vaporization at the critical temperature?', a:'It becomes zero.'},
+  {q:'In the worked example, what is water\'s vapor pressure at 120°C?', a:'About 1.95 atm.'},
+  {q:'What ΔHᵥ value was used in the Clausius–Clapeyron worked example?', a:'9720 cal/mole.'},
+  {q:'Write the general logarithmic form of the Clausius–Clapeyron equation.', a:'log p = −ΔHᵥ/(2.303R) · 1/T + constant.'},
+  {q:'Write the natural-log form of the Clausius–Clapeyron equation.', a:'ln p = −ΔHᵥ/R · 1/T + constant.'},
   {q:'Define boiling point.', a:'The temperature at which a liquid\'s vapor pressure equals the external (atmospheric) pressure.'},
-  {q:'Water\'s boiling point at 700 mmHg?', a:'97.7°C.'},
-  {q:'Water\'s boiling point at 17.5 mmHg?', a:'20°C.'},
-  {q:'What distinguishes crystalline from amorphous solids?', a:'A crystalline solid has an ordered lattice, definite shape, and a sharp melting point.'},
-  {q:'Name the six crystal systems.', a:'Cubic, tetragonal, hexagonal, rhombic, monoclinic, triclinic.'},
+  {q:'What is the approximate atmospheric pressure at sea level?', a:'760 mmHg.'},
+  {q:'At what temperature does water boil at 700 mmHg?', a:'97.7°C.'},
+  {q:'At what temperature does water boil at 17.5 mmHg?', a:'20°C.'},
+  {q:'How does increasing altitude affect boiling point?', a:'It lowers atmospheric pressure, which lowers the boiling point.'},
+  {q:'List examples of crystalline solids mentioned in the lecture.', a:'Ice, sodium chloride, and menthol.'},
+  {q:'What distinguishes crystalline solids from liquids and gases in shape?', a:'Crystalline solids have definite shapes and an orderly (lattice) arrangement of units.'},
+  {q:'Are crystalline solids compressible like gases?', a:'No — solids, like liquids, are practically incompressible.'},
+  {q:'How many distinct crystal systems exist?', a:'Six.'},
   {q:'Which crystal system does sodium chloride belong to?', a:'Cubic.'},
+  {q:'Which crystal system does urea belong to?', a:'Tetragonal.'},
+  {q:'Which crystal system does iodoform belong to?', a:'Hexagonal.'},
+  {q:'Which crystal system does iodine belong to?', a:'Rhombic (orthorhombic).'},
   {q:'Which crystal system does sucrose belong to?', a:'Monoclinic.'},
-  {q:'Define polymorphism.', a:'The ability of a solid to exist in two or more distinct crystalline forms.'},
-  {q:'What fraction of APIs show polymorphism?', a:'More than 50%.'},
-  {q:'Classic non-pharmaceutical example of polymorphism?', a:'Diamond and graphite — both crystalline carbon.'},
-  {q:'How many polymorphs does theobroma oil have, and which is stable?', a:'Four (gamma, alpha, beta prime, beta); beta is stable, melting at 34–36°C.'},
-  {q:'What is a solvate?', a:'A crystalline solid with solvent molecules trapped inside its lattice.'},
+  {q:'Which crystal system does boric acid belong to?', a:'Triclinic.'},
+  {q:'What is the binding force in the sodium chloride crystal lattice?', a:'Electrostatic attraction between the oppositely charged Na⁺ and Cl⁻ ions.'},
+  {q:'Define polymorphism.', a:'The ability of a solid material to exist in two or more crystalline forms with different arrangements in the lattice.'},
+  {q:'What proportion of APIs are estimated to show more than one polymorphic form?', a:'More than 50%.'},
+  {q:'Name the classic non-pharmaceutical example of polymorphism.', a:'Diamond and graphite — both crystalline forms of carbon.'},
+  {q:'How many polymorphic forms does theobroma oil have?', a:'Four.'},
+  {q:'What is the melting point of the stable beta form of theobroma oil?', a:'34°C–36°C.'},
+  {q:'What is a solvate?', a:'A crystalline solid that contains molecules of solvent trapped inside its crystal lattice.'},
   {q:'What is a solvate called when the trapped solvent is water?', a:'A hydrate.'},
-  {q:'Define an amorphous solid.', a:'A solid whose particles have no regular, long-range 3D arrangement.'},
-  {q:'Why is glass moldable by heat?', a:'It has no sharp melting point — it softens and melts gradually over a range.'},
-  {q:'Define the normal melting/freezing point.', a:'The temperature at which pure solid and liquid coexist in equilibrium at 1 atm.'},
-  {q:'Latent heat of fusion of water at 0°C?', a:'About 80 cal/g (1436 cal/mole).'},
-  {q:'Write the Clapeyron equation for melting point vs. pressure.', a:'ΔT/ΔP = T(Vₗ−Vₛ)/ΔHf'},
-  {q:'What happens to gas molecules when a gas is cooled?', a:'They lose kinetic energy and slow down, allowing intermolecular attraction to draw them together.'},
-  {q:'What force pulls cooled gas molecules into the liquid state under pressure?', a:'Van der Waals forces of attraction.'},
-  {q:'Can a gas above its critical temperature be liquefied by pressure alone?', a:'No — no amount of pressure can liquefy it above the critical temperature.'},
-  {q:'Why does water stay liquid so easily compared with helium?', a:'Water has a much higher critical temperature (374°C) than helium (5.2 K).'},
-  {q:'What form is the drug in a pharmaceutical aerosol before spraying?', a:'Dissolved or suspended in the liquid propellant inside the pressurized canister.'},
-  {q:'What happens when the aerosol valve is depressed?', a:'The propellant flashes to vapor and atomizes the nonvolatile drug into a fine spray.'},
-  {q:'In a sealed, evacuated container, what two opposing processes reach equilibrium?', a:'Molecules escaping the liquid surface (evaporation) and molecules returning to the liquid (condensation).'},
-  {q:'What is the Clausius–Clapeyron equation used to estimate in the worked example?', a:'Water\'s vapor pressure at 120°C, rising from 1 atm at 100°C to about 1.95 atm.'},
-  {q:'What molar heat of vaporization value was used in the worked example?', a:'9720 cal/mole.'},
-  {q:'Why is the Clausius–Clapeyron equation normally applied over a defined temperature range?', a:'Because the heat of vaporization drops somewhat as temperature rises and reaches zero at the critical temperature.'},
-  {q:'What forms throughout a liquid once it reaches its boiling point?', a:'Vapor bubbles, once vapor pressure equals atmospheric pressure.'},
-  {q:'Where does heat added to a liquid go once it starts boiling?', a:'Into vaporizing the liquid rather than raising its temperature.'},
-  {q:'How does boiling point change with altitude, and why?', a:'It decreases, because atmospheric pressure drops with altitude.'},
-  {q:'Water\'s boiling point at standard atmospheric pressure (760 mmHg)?', a:'100°C.'},
-  {q:'Describe the axial arrangement of a cubic crystal system.', a:'Three equal axes, all at right angles.'},
-  {q:'Describe the axial arrangement of a tetragonal crystal system, with an example.', a:'Two equal axes plus one longer axis, all at right angles; example: urea.'},
-  {q:'Describe the axial arrangement of a hexagonal crystal system, with an example.', a:'Three equal axes at 120° plus one longer axis at right angles to the others; example: iodoform.'},
-  {q:'Describe the axial arrangement of a rhombic (orthorhombic) crystal system, with an example.', a:'Three unequal axes, all at right angles; example: iodine.'},
-  {q:'Describe the axial arrangement of a monoclinic crystal system, with an example.', a:'Three unequal axes; two at right angles, one oblique; example: sucrose.'},
-  {q:'Describe the axial arrangement of a triclinic crystal system, with an example.', a:'Three unequal axes, none at right angles; example: boric acid.'},
-  {q:'What holds the sodium and chloride ions together in the NaCl lattice?', a:'Electrostatic attraction between the ions.'},
-  {q:'What can happen to a metastable polymorph over time?', a:'It can spontaneously convert to a more stable polymorphic form.'},
-  {q:'What does each polymorph of a solid have that differs from the others?', a:'Its own stability, melting point, and solubility.'},
-  {q:'Melting point of the gamma (γ) polymorph of theobroma oil?', a:'18°C — the most unstable form.'},
-  {q:'Melting point of the alpha (α) polymorph of theobroma oil?', a:'22°C — unstable, converts on standing.'},
-  {q:'Melting point of the beta prime (β′) polymorph of theobroma oil?', a:'28°C — intermediate stability.'},
-  {q:'Why does the stable beta form of theobroma oil matter for suppositories?', a:'It is the target form for suppository moulding, melting at 34–36°C, close to body temperature.'},
-  {q:'Why is trapped solvent in a crystal lattice sometimes called pseudopolymorphism?', a:'Because residual solvent from crystallization can become locked into the structure, mimicking a distinct polymorphic form.'},
-  {q:'What can trapped solvent do to a solid\'s properties?', a:'Shift its melting point and solubility.'},
-  {q:'Why are amorphous solids sometimes called "supercooled liquids"?', a:'Because their particles are disordered, similar to a liquid, despite appearing solid.'},
-  {q:'How can an amorphous solid be converted into a crystalline form?', a:'By heating it and then cooling it slowly.'},
-  {q:'What do the variables Vₗ and Vₛ represent in the Clapeyron equation?', a:'The molar volumes of the liquid and solid phases, respectively.'},
-  {q:'What does ΔHf represent in the Clapeyron equation?', a:'The molar heat of fusion.'},
-  {q:'Latent heat of fusion of water at 0°C, in cal/mole?', a:'1436 cal/mole.'},
-  {q:'At what pressure is the "normal" melting point of a solid measured?', a:'1 atm.'},
-  {q:'Approximate vapor pressure of water at 20°C (from the vapor pressure chart)?', a:'About 17.5 mmHg.'},
-  {q:'Approximate vapor pressure of water at 100°C (from the vapor pressure chart)?', a:'760 mmHg.'},
-  {q:'Which liquid on the vapor pressure chart reaches the highest vapor pressure fastest at moderate temperatures — acetone, benzene, water, or acetic acid?', a:'Acetone.'},
-  {q:'Which liquid on the vapor pressure chart has the lowest vapor pressure at a given moderate temperature?', a:'Acetic acid.'},
-  {q:'What is the general logarithmic form of the vapor pressure equation?', a:'log p = −ΔHᵥ/(2.303R) · 1/T + constant.'}
-];
+  {q:'Define an amorphous solid.', a:'A solid in which the constituent particles do not have a regular three-dimensional arrangement.'},
+  {q:'Give three examples of amorphous solids.', a:'Glass, plastic, and gel.'},
+  {q:'What is the latent heat of fusion of water at 0°C?', a:'About 80 cal/g (1436 cal/mole).'}
+],
+medium: [
+  {q:'Why do liquids occupy a definite volume while gases don\'t?', a:'van der Waals forces bring molecules close enough that they can no longer expand freely, unlike gas molecules.'},
+  {q:'Why is it impossible to liquefy a gas above its critical temperature regardless of pressure?', a:'Above Tc, molecular kinetic energy is too high for van der Waals attractions to hold molecules together in a liquid, however much pressure compresses them.'},
+  {q:'Water has a far higher critical temperature than helium — what does this imply?', a:'Water molecules experience much stronger intermolecular attractions than helium atoms, so more thermal energy is needed to overcome them.'},
+  {q:'Why must an aerosol canister be kept below the critical temperature of its propellant?', a:'Above Tc the propellant cannot exist as a liquid at any pressure, so the reversible liquid⇌gas cycle needed for spraying fails.'},
+  {q:'Why does a nonvolatile drug form a fine spray while the propellant "vaporizes off" at the valve?', a:'The propellant flashes to gas instantly on the pressure drop, and this rapid expansion atomizes the nonvolatile drug into fine droplets.'},
+  {q:'Why has regulation pushed formulators toward nitrogen and carbon dioxide as propellants?', a:'CFCs/HFCs deplete stratospheric ozone; N₂ and CO₂ are inert gases without that ozone-depleting effect.'},
+  {q:'Why does ethyl chloride cause anesthesia physically rather than pharmacologically?', a:'Its rapid evaporation absorbs heat from the skin, physically freezing tissue and numbing nerve endings rather than acting on a drug receptor.'},
+  {q:'Why does vapor pressure in a sealed evacuated vessel eventually stop rising?', a:'Once the rate of condensation equals the rate of vaporization, a dynamic equilibrium is reached and pressure stabilizes.'},
+  {q:'Why does air above a liquid slow evaporation without changing equilibrium vapor pressure?', a:'Air molecules hinder molecules leaving the surface (lowering rate), but do not participate in the liquid–vapor equilibrium itself.'},
+  {q:'From Fig. 2-5, which liquid has the lowest boiling point, and what does this indicate?', a:'Acetone (~56°C); its higher vapor pressure at any temperature indicates weaker intermolecular forces than benzene, water, or acetic acid.'},
+  {q:'Why does acetic acid have the highest boiling point of the four Fig. 2-5 liquids?', a:'It has the lowest vapor pressure at any given temperature, implying the strongest intermolecular forces (hydrogen bonding) among the four.'},
+  {q:'What does any single point on a Fig. 2-5 vapor-pressure curve represent?', a:'A condition where liquid and vapor coexist in equilibrium at that temperature and pressure.'},
+  {q:'According to Fig. 2-5, what two ways drive a liquid entirely into the vapor state?', a:'Increase temperature at constant pressure, or decrease pressure at constant temperature.'},
+  {q:'Why must the two temperatures in the Clausius–Clapeyron equation be absolute?', a:'The derivation depends on the temperature dependence of vapor pressure, which is only valid on the Kelvin (absolute) scale.'},
+  {q:'Why can heat of vaporization not be treated as constant across a wide temperature range?', a:'ΔHᵥ decreases as temperature rises and reaches zero at the critical temperature, so it varies with temperature.'},
+  {q:'Why is the ΔHᵥ used in the worked example valid only "for this temperature range"?', a:'Because ΔHᵥ changes with temperature, a single value is only a good approximation over the specific interval used (100–120°C).'},
+  {q:'Why does raising temperature at constant pressure eventually cause boiling?', a:'Vapor pressure rises with temperature, and boiling starts exactly when vapor pressure equals the surrounding atmospheric pressure.'},
+  {q:'Why does water boil at a lower temperature at high altitude?', a:'Atmospheric pressure decreases with altitude, so a lower vapor pressure (reached at a lower temperature) now suffices to match it.'},
+  {q:'Why does a boiling liquid\'s temperature stay constant while heat keeps being added?', a:'All absorbed heat is used as latent heat to vaporize the liquid, not to raise its temperature, until it is completely vaporized.'},
+  {q:'Why are crystalline solids nearly incompressible, like liquids but unlike gases?', a:'Their particles are packed tightly in a fixed lattice with minimal free space, unlike the widely spaced molecules of a gas.'},
+  {q:'What is the key structural difference between the six crystal systems?', a:'They differ in the number of equal axes and the angles between those axes (symmetry).'},
+  {q:'Why does sodium chloride specifically form a cubic lattice?', a:'Na⁺ and Cl⁻ ions of comparable size alternate along three equal axes at 90°, held together by electrostatic attraction, giving cubic symmetry.'},
+  {q:'What is the practical pharmaceutical significance of a substance\'s crystal lattice?', a:'It affects solubility, dissolution rate, and stability — all important to formulation and bioavailability.'},
+  {q:'Why is polymorphism pharmaceutically important?', a:'Different polymorphs of the same drug can have different melting points and solubilities, altering dissolution rate and even therapeutic activity.'},
+  {q:'Why might a metastable polymorph be undesirable in a marketed product?', a:'It can spontaneously convert to the more stable form over time, changing solubility/dissolution behavior during shelf life.'},
+  {q:'How do diamond and graphite differ despite both being pure carbon?', a:'They are polymorphs — different crystal lattice arrangements of carbon formed under different pressure/temperature conditions.'},
+  {q:'Why does theobroma oil melt over a narrow range (34–36°C) despite having four polymorphs?', a:'It consists mainly of a single glyceride, so its stable beta form melts fairly uniformly and sharply.'},
+  {q:'Why is the stable beta form of theobroma oil preferred for suppository moulding?', a:'Its 34–36°C melting point is just below body temperature, so it stays solid at storage temperature but melts after insertion.'},
+  {q:'Why can polymorphs of a poorly soluble drug show different therapeutic activity?', a:'Different polymorphs have different dissolution rates; for a slightly soluble drug, dissolution can be the rate-limiting step for absorption.'},
+  {q:'How does a solvate differ from a simple mixture of drug crystals and solvent?', a:'In a solvate, solvent molecules are incorporated within the crystal lattice itself, not just physically mixed with the solid.'},
+  {q:'Why is a solvate sometimes called a "pseudopolymorph"?', a:'Like true polymorphs, it can show a distinct melting point and solubility, even though the difference arises from trapped solvent rather than a different drug-only lattice.'},
+  {q:'Why are amorphous solids described as "supercooled liquids"?', a:'Their molecules are arranged randomly, without long-range order, similar to the disordered arrangement of molecules in a liquid.'},
+  {q:'Why doesn\'t an amorphous solid have a sharp melting point?', a:'Lacking a uniform ordered lattice, different regions break down at slightly different temperatures, so it softens and melts over a range.'},
+  {q:'Why do ancient glass objects often look milky?', a:'Slow heating/cooling cycles over long periods allowed partial crystallization within the amorphous glass structure.'},
+  {q:'Why is the normal melting point defined specifically at 1 atm?', a:'Because melting point can shift with pressure, so a standard reference pressure is needed for a reproducible, comparable value.'},
+  {q:'In ΔT/ΔP = T(Vₗ−Vₛ)/ΔHf, what does a larger (Vₗ−Vₛ) indicate about pressure sensitivity?', a:'A larger volume difference means the melting point changes more per unit change in pressure.'},
+  {q:'Why is heat of fusion "absorbed" on melting but "liberated" on freezing?', a:'Melting requires energy to break the ordered lattice into a disordered liquid; freezing releases that same energy as molecules reorder.'},
+  {q:'How does the propellant concept relate to critical temperature?', a:'A substance can only work as a propellant if room temperature is below its critical temperature, so it can be liquefied by pressure alone.'},
+  {q:'Why must a manometer measure vapor pressure in an evacuated, air-free vessel?', a:'Air adds partial pressure and slows the approach to equilibrium, so its presence would distort the reading of the liquid\'s true equilibrium vapor pressure.'},
+  {q:'How does critical temperature relate to ΔHᵥ becoming zero at that point?', a:'At the critical temperature, liquid and gas become indistinguishable, so there is no longer a phase change — and therefore no latent heat.'},
+  {q:'Why does the Clausius–Clapeyron equation use two temperatures, T₁ and T₂?', a:'It describes how vapor pressure changes between two temperature points, letting you calculate an unknown pressure from a known one.'},
+  {q:'Contrast crystalline and amorphous solids in terms of order and melting.', a:'Crystalline solids have ordered lattices and sharp melting points; amorphous solids lack long-range order and melt gradually over a range.'},
+  {q:'Why might formulating a poorly soluble API in a metastable polymorph improve bioavailability?', a:'Metastable polymorphs are generally more soluble/faster-dissolving, temporarily boosting absorption before converting to the stable form.'},
+  {q:'Why does a liquid in an open container eventually evaporate fully without boiling?', a:'Even below boiling point it has measurable vapor pressure; without a sealed container, escaping molecules are carried away rather than reaching equilibrium.'},
+  {q:'Why is "normal freezing/melting point" tied to exactly 1 atm?', a:'To establish a universal reference condition so melting points of different substances can be meaningfully compared.'},
+  {q:'How does molecular packing explain the near-incompressibility of crystalline solids?', a:'Particles are already closely packed with minimal empty space, unlike the widely separated molecules of a gas.'},
+  {q:'Why would a pharmaceutical scientist need to know all six crystal systems?', a:'Different crystal systems influence solubility, hygroscopicity, and compressibility relevant to formulation.'},
+  {q:'What does "reversible change of state" mean for aerosol propellants?', a:'The propellant can repeatedly cycle between liquid and gas without permanent chemical change.'},
+  {q:'Why is pressure alone insufficient to liquefy a gas above its critical temperature?', a:'Molecular kinetic energy above Tc is too great for van der Waals forces to hold the molecules in a condensed liquid state.'},
+  {q:'Why does the boiling point of water decrease at higher elevations, and what is its boiling point at 17.5 mmHg?', a:'Atmospheric pressure falls with elevation, so a lower vapor pressure suffices to match it, lowering the boiling point; at 17.5 mmHg water boils at 20°C.'}
+],
+hard: [
+  {q:'Using log(p₂/p₁)=ΔHᵥ(T₂−T₁)/(2.303RT₁T₂) with ΔHᵥ=9720 cal/mol, p₁=1 atm at 373 K, T₂=393 K — what is p₂?', a:'log p₂ = 9720×20 / (2.303×1.987×373×393) ≈ 0.290 → p₂ ≈ 1.95 atm.'},
+  {q:'The Clausius–Clapeyron equation assumes an ideal, dilute vapor and negligible liquid molar volume. Why does this break down near the critical point?', a:'Near Tc, liquid and vapor molar volumes converge and the vapor is no longer dilute/ideal, so the equation loses accuracy as ΔHᵥ approaches zero.'},
+  {q:'A propellant has Tc = 25°C. What happens to its canister left in a car at 45°C?', a:'Above 25°C it cannot exist as liquid at any pressure — it becomes entirely gas, causing internal pressure to spike and risking rupture.'},
+  {q:'A drug is formulated in its metastable polymorph for faster dissolution. What long-term storage risk does this create?', a:'It may gradually convert to the more stable, typically less soluble form over shelf life, reducing dissolution rate/bioavailability inconsistently.'},
+  {q:'In ΔT/ΔP=T(Vₗ−Vₛ)/ΔHf, water\'s solid (ice) has a larger molar volume than its liquid. What is the sign of ΔT/ΔP?', a:'Negative — since Vₗ−Vₛ < 0 for water, increasing pressure actually lowers water\'s melting point, unlike most substances.'},
+  {q:'Why is water\'s ΔHᵥ lower at 180°C (478 cal/g) than at 100°C (539 cal/g), given Tc = 374°C?', a:'As temperature rises toward Tc, liquid and vapor become progressively more similar, needing less energy to interconvert, until ΔHᵥ reaches zero exactly at Tc.'},
+  {q:'A liquid has p = 400 mmHg at 60°C and ΔHᵥ ≈ 8000 cal/mol. Set up the equation to find T for p = 760 mmHg.', a:'log(760/400) = 8000(T₂−333)/(2.303×1.987×333×T₂); solve for T₂ to get the normal boiling point.'},
+  {q:'Why does the melting-point Clapeyron equation lack the logarithmic term seen in the vaporization form?', a:'The ideal, low-density vapor assumption used to derive the log form doesn\'t apply to solid–liquid transitions, where both phases have comparable molar volumes.'},
+  {q:'An API has two polymorphs — one far more soluble but less stable. What is the formulation trade-off?', a:'The soluble/metastable form gives faster dissolution and possibly better bioavailability, but risks converting to the stable, less soluble form over time; the stable form sacrifices initial dissolution rate for consistency.'},
+  {q:'Why is a single ΔHᵥ acceptable over a 20°C interval (100→120°C) despite being temperature-dependent?', a:'ΔHᵥ changes only gradually away from the critical point, so an averaged value is a reasonable approximation over a modest interval.'},
+  {q:'Acetic acid\'s curve crosses 760 mmHg near 118°C vs. water\'s 100°C. What does this reveal about intermolecular forces?', a:'Acetic acid molecules experience stronger intermolecular attraction (hydrogen-bonded dimers) than water at the point of vaporization.'},
+  {q:'Why does using an averaged ΔHᵥ become more error-prone closer to the critical temperature?', a:'ΔHᵥ falls nonlinearly toward zero near Tc, so a value averaged from a wider/higher range increasingly overestimates the true, rapidly diminishing ΔHᵥ.'},
+  {q:'A propellant has Pc = 40 atm and is stored below its critical temperature. What phases coexist inside the sealed can?', a:'Both liquid and vapor coexist in equilibrium, since below Tc the propellant can be liquid under sufficient pressure, with vapor above exerting equilibrium vapor pressure.'},
+  {q:'The general Clausius–Clapeyron form gives a straight line for log p vs. 1/T. How could this be used experimentally?', a:'Plotting log(vapor pressure) against 1/T yields a line of slope −ΔHᵥ/2.303R, letting ΔHᵥ be calculated from the measured slope.'},
+  {q:'A drug\'s hydrate has higher melting point but lower solubility than the anhydrous form. What happens if the anhydrous form converts to hydrate during humid storage?', a:'Effective solubility/dissolution rate would fall over shelf life, potentially reducing bioavailability versus what was validated with the anhydrous form.'},
+  {q:'Why is theobroma oil\'s narrow melting range (34–36°C) pharmaceutically ideal for suppositories?', a:'It stays solid and stable at storage temperature but melts quickly and completely once inserted (just below body temperature), giving reliable drug release.'},
+  {q:'Why must ΔHᵥ logically equal zero exactly at the critical temperature?', a:'If liquid and vapor become one indistinguishable phase at Tc, there is no phase boundary or latent heat left for the "vaporization."'},
+  {q:'For most substances, Vₗ > Vₛ. What does ΔT/ΔP=T(Vₗ−Vₛ)/ΔHf predict about pressure\'s effect on melting point?', a:'Since Vₗ−Vₛ is positive, increasing pressure raises the melting point — pressure favors the denser (solid) phase.'},
+  {q:'Contrast how cooling and pressure each promote gas liquefaction via van der Waals forces.', a:'Cooling reduces kinetic energy so existing attractions dominate; pressure physically forces molecules within range of the same attractions — both tip the balance toward attraction over thermal motion.'},
+  {q:'A liquid shows unusually low vapor pressure at all temperatures. What does this suggest about its forces, boiling point, and ΔHᵥ?', a:'Strong intermolecular forces (e.g., hydrogen bonding); it will have a higher boiling point and typically a higher heat of vaporization.'},
+  {q:'What regulatory implication follows from ">50% of APIs are polymorphic"?', a:'Regulators typically require companies to identify, characterize, and control the specific polymorphic form to ensure batch-to-batch consistency and prevent unintended conversion.'},
+  {q:'How does reduced atmospheric pressure at altitude affect (a) boiling point and (b) equilibrium vapor pressure at a fixed sub-boiling temperature?', a:'(a) Boiling point falls, since a lower vapor pressure now matches the reduced atmosphere; (b) equilibrium vapor pressure at fixed temperature is unaffected — it depends only on temperature.'},
+  {q:'Why can propane/butane be stored liquid at room temperature in cylinders, but methane cannot?', a:'Propane/butane have critical temperatures above room temperature, so pressure alone liquefies them; methane\'s Tc is below room temperature, so no pressure can liquefy it without cooling first.'},
+  {q:'A drug\'s amorphous form dissolves faster but recrystallizes on storage. Explain both observations.', a:'The amorphous form is already in a higher-energy, disordered state, needing less energy to dissolve; but this same disorder is thermodynamically less stable, so it can spontaneously reorganize into the ordered crystal over time.'},
+  {q:'Why does log p vs. 1/T being linear translate into a curved (not straight-line) p vs. T plot?', a:'Because the linear relationship is between log(p) and 1/T, not p and T directly, converting back produces the steepening, nonlinear vapor-pressure curves seen in Fig. 2-5.'},
+  {q:'By what percentage does water\'s ΔHᵥ fall from 100°C to 180°C, and what must it reach at 374°C?', a:'(539−478)/539 ≈ 11.3% decrease; extrapolating, it must continue falling to exactly zero at the critical temperature.'},
+  {q:'Which theobroma oil polymorph should manufacturers target for suppositories, and why is careful tempering needed?', a:'The stable beta form (34–36°C); tempering is needed because the oil can first solidify into a less stable form (gamma/alpha/beta prime) that later converts unpredictably to beta, altering performance.'},
+  {q:'A hydrate loses its water of crystallization on heating, becoming anhydrous. What phenomenon is this, and what may change?', a:'Pseudopolymorphism/desolvation; the lattice change can alter both melting point and solubility, often increasing dissolution rate in the anhydrous form.'},
+  {q:'Why does air lower evaporation rate but not equilibrium vapor pressure, mechanistically?', a:'Air molecules collide with and slow escaping liquid molecules near the surface, but once true equilibrium is reached the liquid\'s own vapor partial pressure depends only on the liquid and temperature.'},
+  {q:'Why is quoting critical pressure meaningless without critical temperature?', a:'Critical pressure is defined as the pressure needed to liquefy a gas specifically at its critical temperature — it corresponds to one exact (Tc, Pc) point, so it is incomplete alone.'},
+  {q:'What does "spontaneous" polymorphic conversion (metastable→stable) imply thermodynamically?', a:'The stable form has lower free energy under the given conditions, so the system naturally moves toward it, even if the rate is slow.'},
+  {q:'If four polymorphs have increasing melting points, what solubility trend would you predict, and why?', a:'Lower-melting polymorphs tend to have higher solubility, since a lower melting point reflects weaker lattice energy, more easily overcome by solvent interaction.'},
+  {q:'How does the Clapeyron equation justify high pressure and temperature in synthesizing diamond from graphite?', a:'High temperature supplies energy for atomic rearrangement, while high pressure favors the denser polymorph (diamond), consistent with pressure favoring the smaller-molar-volume phase.'},
+  {q:'What does the steepness of a vapor-pressure curve near a point reflect, using the Clausius–Clapeyron relation?', a:'dp/dT is proportional to (p×ΔHᵥ)/(RT²), so a steep curve reflects large ΔHᵥ and rapidly accelerating vaporization tendency near that temperature.'},
+  {q:'Why does QC testing use X-ray diffraction, not just melting point, to confirm polymorphic identity?', a:'Different polymorphs can have overlapping/similar melting points, but their unique lattice arrangement gives a distinct diffraction pattern, offering more definitive confirmation.'},
+  {q:'Why is boiling better defined as "vapor pressure = atmospheric pressure" rather than "a high enough temperature"?', a:'Because the "high enough" temperature isn\'t fixed — it depends on ambient pressure, explaining why boiling point varies with altitude.'},
+  {q:'How would critical temperatures of acetone, benzene, water, and acetic acid likely correlate with their boiling points?', a:'Liquids with higher normal boiling points (stronger intermolecular forces) tend to have higher critical temperatures too, since both depend on the same attractive forces.'},
+  {q:'Why is identifying a precise "melting point" scientifically problematic for an amorphous solid?', a:'There is no single sharp transition temperature — different regions soften at slightly different temperatures across a range, unlike a crystalline solid\'s sharp transition.'},
+  {q:'A candidate propellant has Tc = −10°C. Why can it never work as a room-temperature aerosol propellant?', a:'Room temperature is above its Tc, so no pressure can liquefy it at room temperature — the propellant mechanism requires the substance to stay liquid inside the canister.'},
+  {q:'How do crystalline solids, polymorphs, and solvates/hydrates relate to and differ from one another?', a:'Crystalline solids are ordered lattices generally; polymorphism is when one substance forms more than one such lattice; solvates/hydrates incorporate solvent molecules within the lattice itself, forming a chemically different (drug+solvent) crystal.'}
+]
+};
 const flashGrid = document.getElementById('flashGrid');
-flashcards.forEach(fc=>{
-  const card = document.createElement('div'); card.className='flash-card';
-  card.innerHTML = `<div class="flash-inner">
-      <div class="flash-face flash-front">${fc.q}<span class="flash-hint">TAP</span></div>
-      <div class="flash-face flash-back">${fc.a}<span class="flash-hint">TAP</span></div>
-    </div>`;
-  card.addEventListener('click', ()=>card.classList.toggle('flipped'));
-  flashGrid.appendChild(card);
+function renderFlashLevel(level){
+  flashGrid.innerHTML = '';
+  flashcardsByLevel[level].forEach(fc=>{
+    const card = document.createElement('div'); card.className='flash-card';
+    card.innerHTML = `<div class="flash-inner">
+        <div class="flash-face flash-front">${fc.q}<span class="flash-hint">TAP</span></div>
+        <div class="flash-face flash-back">${fc.a}<span class="flash-hint">TAP</span></div>
+      </div>`;
+    card.addEventListener('click', ()=>card.classList.toggle('flipped'));
+    flashGrid.appendChild(card);
+  });
+}
+document.querySelectorAll('#flashLevelTabs .level-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('#flashLevelTabs .level-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    renderFlashLevel(btn.dataset.level);
+  });
 });
+renderFlashLevel('easy');
 
-/* ---------------- QUIZ BANK ---------------- */
-const quizQuestions = [
+/* ---------------- QUIZ BANK (3 difficulty levels) ---------------- */
+const quizQuestionsByLevel = {
+easy: [
   {q:'What happens to gas molecules when a gas is cooled?', opts:['They gain kinetic energy','They lose kinetic energy and slow down','They ionize','They become denser than the liquid phase'], correct:1},
-  {q:'Above the critical temperature, a gas:', opts:['Can be liquefied only with high pressure','Cannot be liquefied at any pressure','Automatically liquefies','Has zero vapor pressure'], correct:1},
+  {q:'Which force draws gas molecules into the liquid state under pressure?', opts:['Ionic bonding','van der Waals forces','Covalent bonding','Hydrogen bonding only'], correct:1},
+  {q:'Why do liquids occupy a definite volume?', opts:['Weak dispersion forces make them expand','Van der Waals forces bring molecules close, making liquids denser with a definite volume','Gravity alone binds molecules','Liquids have no intermolecular forces'], correct:1},
+  {q:'Which two factors determine transitions between gas, liquid, and solid?', opts:['Color and odor','Temperature and pressure','Density and viscosity','Volume and mass'], correct:1},
+  {q:'Define critical temperature.', opts:['The temperature at which a liquid boils at 1 atm','The temperature above which a gas cannot be liquefied by pressure alone','The freezing point of a gas','The temperature at which vapor pressure is zero'], correct:1},
+  {q:'Define critical pressure.', opts:['The pressure needed to liquefy a gas at its critical temperature','The atmospheric pressure at sea level','The pressure at which a solid melts','The vapor pressure at 0°C'], correct:0},
+  {q:'What is the critical temperature of water?', opts:['100°C','218°C','374°C','647°C'], correct:2},
   {q:'What is the critical pressure of water?', opts:['100 atm','218 atm','374 atm','647 atm'], correct:1},
   {q:'What is the critical temperature of helium?', opts:['218 K','100 K','5.2 K','374 K'], correct:2},
-  {q:'Which force draws gas molecules into the liquid state under pressure?', opts:['Ionic bonding','van der Waals forces','Covalent bonding','Hydrogen bonding only'], correct:1},
-  {q:'In a pharmaceutical aerosol, the propellant is:', opts:['Always solid','Liquid under canister pressure, gas at atmospheric pressure','Gas under canister pressure only','Inert and never vaporizes'], correct:1},
+  {q:'What is the critical pressure of helium?', opts:['2.26 atm','5.2 atm','218 atm','1 atm'], correct:0},
+  {q:'What condition keeps a gas liquefied under pressure in a closed chamber?', opts:['Chamber kept above critical temperature','Chamber kept below critical temperature','Chamber kept at 0°C always','Chamber pressure reduced to zero'], correct:1},
+  {q:'What happens when pressure is reduced on a liquefied gas in an aerosol?', opts:['Liquid stays liquid','Molecules expand and the liquid reverts to a gas','Liquid freezes','Nothing changes'], correct:1},
+  {q:'How would you define a propellant?', opts:['A material that is always gas','A material that is liquid under canister pressure but gas at atmospheric pressure','A solid excipient','An inert filler with no phase change'], correct:1},
+  {q:'How is the drug–propellant mixture expelled from an aerosol container?', opts:['By heating the can','By depressing a valve — excess pressure expels it','By shaking only','By freezing the can'], correct:1},
+  {q:'What happens to a nonvolatile drug at the aerosol valve orifice?', opts:['It stays as a single liquid droplet','It forms a fine spray as the propellant vaporizes off','It solidifies immediately','It dissolves in air'], correct:1},
+  {q:'Which chemicals were traditionally used as aerosol propellants?', opts:['Nitrogen and oxygen only','Chlorofluorocarbons and hydrofluorocarbons','Sulfur dioxide and ammonia','Ethanol and water'], correct:1},
   {q:'Why have CFCs been restricted as aerosol propellants?', opts:['They are flammable','They are too expensive','Ozone depletion concerns','They react with drugs'], correct:2},
   {q:'Which gases have replaced CFCs/HFCs in many aerosol propellants?', opts:['Oxygen and hydrogen','Nitrogen and carbon dioxide','Helium and neon','Chlorine and fluorine'], correct:1},
+  {q:'Give an advantage of aerosol formulation mentioned in the lecture.', opts:['Cheaper packaging only','Antiseptics can be sprayed on abraded skin with minimal discomfort','Aerosols never need a propellant','Aerosols are always more toxic'], correct:1},
+  {q:'What is ethyl chloride used for pharmaceutically?', opts:['Oral anesthesia','A local (topical) anesthetic spray for athletic injuries','Antibiotic therapy','Antihistamine treatment'], correct:1},
   {q:'Ethyl chloride produces local anesthesia on skin because it:', opts:['Reacts chemically with skin','Is toxic','Cools sharply as it expands, freezing tissue','Dissolves the epidermis'], correct:2},
-  {q:'Equilibrium vapor pressure is reached when:', opts:['All liquid has evaporated','Rate of vaporization exceeds condensation','Rate of condensation equals rate of vaporization','Pressure is zero'], correct:2},
-  {q:'Adding an inert gas like air above a liquid:', opts:['Increases equilibrium vapor pressure','Decreases equilibrium vapor pressure','Does not affect equilibrium vapor pressure, but slows evaporation rate','Stops evaporation completely'], correct:2},
-  {q:'In Fig. 2-5, which liquid shows the highest vapor pressure at a given moderate temperature?', opts:['Water','Acetic acid','Acetone','Benzene'], correct:2},
-  {q:'The Clausius–Clapeyron equation relates vapor pressure to:', opts:['Molar heat of fusion','Molar heat of vaporization','Critical pressure only','Atmospheric density'], correct:1},
+  {q:'Define equilibrium (saturated) vapor pressure.', opts:['The pressure when all liquid has evaporated','The pressure of a saturated vapor when condensation rate equals vaporization rate','A pressure of exactly zero','Atmospheric pressure, always'], correct:1},
+  {q:'What instrument records vapor pressure, and in what units?', opts:['A thermometer, in °C','A manometer, in mmHg','A barometer, in psi only','A hydrometer, in g/mL'], correct:1},
+  {q:'How does air above a liquid affect its equilibrium vapor pressure?', opts:['It increases it','It decreases it','It does not affect the equilibrium pressure, only slows the evaporation rate','It stops evaporation completely'], correct:2},
+  {q:'Which four liquids are plotted in Fig. 2-5?', opts:['Ethanol, methanol, water, acetone','Acetone, benzene, water, acetic acid','Water, oil, glycerin, ether','Benzene, toluene, xylene, water'], correct:1},
+  {q:'In the Clausius–Clapeyron equation, ΔHᵥ represents:', opts:['Molar heat of fusion','Molar heat of vaporization','Critical pressure','Latent heat of sublimation'], correct:1},
+  {q:'Which is the correct form of the Clausius–Clapeyron equation?', opts:['log(p₂/p₁) = ΔHf(T₂−T₁)/2.303RT₁T₂','log(p₂/p₁) = ΔHᵥ(T₂−T₁)/2.303RT₁T₂','p₂/p₁ = ΔHᵥ × T','log p = ΔHᵥ × T₂'], correct:1},
+  {q:'What is the heat of vaporization of water at 100°C?', opts:['478 cal/g','539 cal/g','80 cal/g','9720 cal/g'], correct:1},
+  {q:'What is the heat of vaporization of water at 180°C?', opts:['539 cal/g','478 cal/g','218 cal/g','1436 cal/g'], correct:1},
+  {q:'At the critical temperature, the heat of vaporization:', opts:['Is at its maximum','Becomes zero','Doubles','Is unaffected by temperature'], correct:1},
   {q:'In the worked example, water\'s vapor pressure at 120°C is approximately:', opts:['1.00 atm','1.95 atm','3.50 atm','0.95 atm'], correct:1},
   {q:'The molar heat of vaporization used in the worked example was:', opts:['539 cal/g','1436 cal/mole','9720 cal/mole','80 cal/g'], correct:2},
-  {q:'At the critical temperature, the heat of vaporization:', opts:['Is at its maximum','Becomes zero','Doubles','Is unaffected by temperature'], correct:1},
+  {q:'Which is the general logarithmic form of the Clausius–Clapeyron equation?', opts:['log p = −ΔHᵥ/2.303R × 1/T + constant','log p = ΔHᵥ × T','p = ΔHᵥ/T','log p = 2.303R/ΔHᵥ'], correct:0},
+  {q:'Which is the natural-log form of the Clausius–Clapeyron equation?', opts:['ln p = −ΔHᵥ/R × 1/T + constant','ln p = ΔHᵥ × R × T','ln p is unrelated to ΔHᵥ','ln p = ΔHf/R × T'], correct:0},
   {q:'Boiling point is defined as the temperature at which:', opts:['A liquid freezes','Vapor pressure equals external pressure','Vapor pressure is zero','Density is maximum'], correct:1},
+  {q:'What is the approximate atmospheric pressure at sea level?', opts:['100 mmHg','380 mmHg','760 mmHg','1000 mmHg'], correct:2},
   {q:'At 700 mmHg, water boils at:', opts:['100°C','97.7°C','90°C','80°C'], correct:1},
   {q:'At 17.5 mmHg, water boils at:', opts:['100°C','50°C','20°C','0°C'], correct:2},
   {q:'As altitude increases, atmospheric pressure and boiling point:', opts:['Both increase','Both decrease','Pressure decreases, boiling point increases','Pressure increases, boiling point decreases'], correct:1},
-  {q:'Which property distinguishes crystalline from amorphous solids?', opts:['Color','A sharp, definite melting point','Odor','Density alone'], correct:1},
+  {q:'Which are examples of crystalline solids in the lecture?', opts:['Glass, plastic, gel','Ice, sodium chloride, menthol','Rubber, wax, resin','Air, water vapor, steam'], correct:1},
+  {q:'What distinguishes crystalline solids in terms of shape?', opts:['No definite shape','A definite shape and orderly lattice arrangement','A random arrangement like a liquid','Only gases have shape'], correct:1},
+  {q:'Are crystalline solids easily compressed, like gases?', opts:['Yes, just like gases','No, practically incompressible, like liquids','Only at high temperature','Only when amorphous'], correct:1},
   {q:'How many distinct crystal systems are there?', opts:['4','5','6','8'], correct:2},
   {q:'Sodium chloride belongs to which crystal system?', opts:['Triclinic','Cubic','Hexagonal','Monoclinic'], correct:1},
   {q:'Urea crystallizes in which system?', opts:['Tetragonal','Rhombic','Monoclinic','Cubic'], correct:0},
   {q:'Iodoform crystallizes in which system?', opts:['Triclinic','Hexagonal','Cubic','Monoclinic'], correct:1},
+  {q:'Iodine crystallizes in which system?', opts:['Rhombic (orthorhombic)','Cubic','Hexagonal','Triclinic'], correct:0},
   {q:'Sucrose crystallizes in which system?', opts:['Monoclinic','Triclinic','Hexagonal','Cubic'], correct:0},
   {q:'Boric acid crystallizes in which system?', opts:['Rhombic','Cubic','Triclinic','Tetragonal'], correct:2},
   {q:'In the NaCl lattice, the binding force between ions is:', opts:['Covalent bonding','van der Waals forces','Electrostatic attraction','Hydrogen bonding'], correct:2},
   {q:'Polymorphism is the ability of a solid to:', opts:['Dissolve in multiple solvents','Exist in two or more crystalline forms','Melt at only one temperature','Remain amorphous permanently'], correct:1},
   {q:'Roughly what proportion of active pharmaceutical ingredients show polymorphism?', opts:['Less than 10%','About 25%','More than 50%','Exactly 100%'], correct:2},
-  {q:'Diamond and graphite illustrate polymorphism because both are:', opts:['Different elements','Crystalline forms of carbon','Amorphous solids','Solvates of carbon'], correct:1},
-  {q:'Which theobroma oil polymorph is the stable form, melting at 34–36°C?', opts:['Gamma','Alpha','Beta prime','Beta'], correct:3},
-  {q:'The unstable gamma form of theobroma oil melts at:', opts:['18°C','22°C','28°C','36°C'], correct:0},
+  {q:'Diamond and graphite illustrate polymorphism because both are:', opts:['Water and ice','Crystalline forms of carbon','Amorphous solids','Solvates of carbon'], correct:1},
+  {q:'How many polymorphic forms does theobroma oil have?', opts:['Two','Three','Four','Five'], correct:2},
+  {q:'What is the melting point of the stable beta form of theobroma oil?', opts:['18°C','22°C','28°C','34–36°C'], correct:3},
+  {q:'How would you define a solvate?', opts:['A crystal with no solvent at all','A crystalline solid with solvent molecules trapped in its lattice','A liquid mixture of drug and water','An amorphous drug form'], correct:1},
   {q:'A solvate in which the trapped solvent is water is called a:', opts:['Polymorph','Hydrate','Eutectic','Suspension'], correct:1},
-  {q:'Trapped residual solvent inside a crystal lattice is sometimes termed:', opts:['Polymorphism','Pseudopolymorphism','Isomerism','Racemization'], correct:1},
-  {q:'Amorphous solids are sometimes described as:', opts:['Supercooled liquids','Superheated gases','Ionic crystals','Perfect lattices'], correct:0},
-  {q:'Which is NOT a characteristic of amorphous solids?', opts:['No long-range order','Sharp melting point','Can convert to crystalline form on slow cooling','Melts over a temperature range'], correct:1},
-  {q:'The normal melting point of a pure crystalline solid is measured at an external pressure of:', opts:['0.5 atm','1 atm','2 atm','10 atm'], correct:1},
-  {q:'The latent heat of fusion of water at 0°C is about:', opts:['539 cal/g','80 cal/g','218 cal/g','9720 cal/g'], correct:1},
-  {q:'The Clapeyron equation relates melting-point change to:', opts:['Heat of vaporization only','Pressure and the molar volumes of liquid and solid','Critical temperature','Vapor pressure curves'], correct:1},
-  {q:'Increasing pressure on a cooled gas causes liquefaction because:', opts:['It raises the critical temperature','Van der Waals attraction pulls molecules within range of each other','It destroys molecular kinetic energy entirely','It converts the gas into a solid directly'], correct:1},
-  {q:'Compared with helium, water has a critical temperature that is:', opts:['Much lower','About the same','Much higher','Undefined'], correct:2},
-  {q:'The critical pressure of helium is approximately:', opts:['2.26 atm','218 atm','5.2 atm','100 atm'], correct:0},
-  {q:'Before an aerosol is sprayed, the drug is typically:', opts:['A solid pellet inside the valve','Dissolved or suspended in the liquid propellant','Bound chemically to the propellant','Stored as a separate gas layer'], correct:1},
-  {q:'When an aerosol valve is depressed, the propellant:', opts:['Remains liquid','Flashes to vapor and atomizes the drug','Freezes instantly','Neutralizes the drug'], correct:1},
-  {q:'A nonvolatile drug in an aerosol formulation is delivered by being:', opts:['Dissolved permanently in propellant','Atomized into a fine spray as propellant vaporizes','Sublimated directly to gas','Ionized by the valve'], correct:1},
-  {q:'In a sealed, evacuated container, dynamic equilibrium of a liquid and its vapor is reached when:', opts:['All liquid evaporates','Molecules stop moving','The rate of molecules leaving equals the rate returning','Pressure drops to zero'], correct:2},
-  {q:'According to the worked Clausius–Clapeyron example, water\'s vapor pressure rises from 1 atm at 100°C to about:', opts:['1.25 atm at 110°C','1.95 atm at 120°C','3.00 atm at 130°C','0.90 atm at 90°C'], correct:1},
-  {q:'Why is the Clausius–Clapeyron equation typically applied over a limited temperature range?', opts:['Because pressure units change with temperature','Because heat of vaporization decreases with rising temperature, reaching zero at the critical point','Because the gas constant R changes','Because boiling only occurs once'], correct:1},
-  {q:'When a liquid boils, added heat goes toward:', opts:['Raising the liquid\'s temperature further','Vaporizing the liquid at constant temperature','Increasing atmospheric pressure','Cooling the container'], correct:1},
-  {q:'As atmospheric pressure decreases with altitude, a liquid\'s boiling point:', opts:['Increases','Decreases','Stays the same','Becomes undefined'], correct:1},
-  {q:'The cubic crystal system is characterized by:', opts:['Three unequal axes, none at right angles','Three equal axes, all at right angles','Two equal axes and one longer axis','Three equal axes at 120°'], correct:1},
-  {q:'The tetragonal crystal system is characterized by:', opts:['Three equal axes at 120°','Two equal axes plus one longer axis, all at right angles','Three unequal axes, none at right angles','Three unequal axes, two at right angles'], correct:1},
-  {q:'The hexagonal crystal system is characterized by:', opts:['Three equal axes at 120° plus one longer axis at right angles','Three unequal, oblique axes','Two equal axes only','Cubic symmetry with extra faces'], correct:0},
-  {q:'The rhombic (orthorhombic) crystal system is characterized by:', opts:['Three unequal axes, all at right angles','Three equal axes at 120°','Two axes oblique, one at right angles','Three unequal, non-orthogonal axes'], correct:0},
-  {q:'The monoclinic crystal system is characterized by:', opts:['All axes oblique','Three unequal axes; two at right angles, one oblique','Three equal axes, all orthogonal','Two equal, one longer axis'], correct:1},
-  {q:'The triclinic crystal system is characterized by:', opts:['Three unequal axes, none at right angles','Three equal axes, all at right angles','Two equal axes, one oblique','Three axes at 120°'], correct:0},
-  {q:'What force binds the ions together in the sodium chloride crystal lattice?', opts:['Van der Waals forces','Hydrogen bonding','Electrostatic (ionic) attraction','Covalent sharing only'], correct:2},
-  {q:'A metastable polymorph can:', opts:['Never change form','Spontaneously convert to a more stable polymorph over time','Only exist at absolute zero','Convert only under UV light'], correct:1},
-  {q:'Each polymorph of a solid differs from other polymorphs in its:', opts:['Chemical formula only','Stability, melting point, and solubility','Molecular weight only','Elemental composition'], correct:1},
-  {q:'The melting point of the gamma (γ) polymorph of theobroma oil is about:', opts:['18°C','22°C','28°C','35°C'], correct:0},
-  {q:'The melting point of the alpha (α) polymorph of theobroma oil is about:', opts:['18°C','22°C','28°C','35°C'], correct:1},
-  {q:'The melting point of the beta prime (β′) polymorph of theobroma oil is about:', opts:['18°C','22°C','28°C','35°C'], correct:2},
-  {q:'Why is the stable beta form of theobroma oil preferred for suppository moulding?', opts:['It has the lowest melting point','It melts near body temperature (34–36°C) and is the stable form','It is amorphous','It is the cheapest to produce'], correct:1},
-  {q:'Residual solvent trapped in a crystal lattice during crystallization is sometimes referred to as:', opts:['True polymorphism','Pseudopolymorphism','Racemization','Isomerization'], correct:1},
-  {q:'Trapped solvent inside a crystal lattice can affect:', opts:['Only the color of the crystal','Melting point and solubility','Nothing measurable','Only the crystal\'s odor'], correct:1},
-  {q:'Amorphous solids are sometimes described as "supercooled liquids" because:', opts:['They are always cold','Their particles lack long-range order, similar to a liquid','They boil at low temperatures','They are always transparent'], correct:1},
-  {q:'An amorphous solid can be converted to a crystalline form by:', opts:['Rapid cooling only','Heating followed by slow cooling','Exposure to light','Adding a solvent'], correct:1},
-  {q:'In the Clapeyron equation, Vₗ and Vₛ represent:', opts:['Vapor pressures of liquid and solid','Molar volumes of liquid and solid','Velocities of liquid and solid particles','Viscosities of liquid and solid'], correct:1},
-  {q:'In the Clapeyron equation, ΔHf represents:', opts:['Molar heat of vaporization','Molar heat of fusion','Heat capacity','Critical heat'], correct:1},
-  {q:'The latent heat of fusion of water at 0°C, expressed per mole, is about:', opts:['80 cal/mole','539 cal/mole','1436 cal/mole','9720 cal/mole'], correct:2},
-  {q:'The "normal" melting point of a solid is conventionally measured at:', opts:['0.5 atm','1 atm','2 atm','Variable pressure'], correct:1},
-  {q:'On the vapor pressure chart, water\'s approximate vapor pressure at 20°C is:', opts:['4.6 mmHg','17.5 mmHg','92.5 mmHg','355 mmHg'], correct:1},
-  {q:'On the vapor pressure chart, water\'s approximate vapor pressure at 100°C is:', opts:['355 mmHg','525 mmHg','760 mmHg','1000 mmHg'], correct:2},
-  {q:'Among acetone, benzene, water, and acetic acid, which reaches high vapor pressure fastest at moderate temperature?', opts:['Water','Acetic acid','Acetone','Benzene'], correct:2},
-  {q:'Among acetone, benzene, water, and acetic acid, which has the lowest vapor pressure at a given moderate temperature?', opts:['Acetone','Benzene','Water','Acetic acid'], correct:3},
-  {q:'The general logarithmic vapor pressure equation log p = −ΔHᵥ/(2.303R)·1/T + constant is derived from:', opts:['The Clapeyron equation','The Clausius–Clapeyron equation','The ideal gas law alone','Raoult\'s law'], correct:1},
-  {q:'A pharmaceutical aerosol propellant must remain liquid:', opts:['At atmospheric pressure only','Under the canister\'s internal pressure','At all temperatures regardless of pressure','Only when refrigerated'], correct:1},
-  {q:'Which of the following best describes why glass can be moulded or blown?', opts:['It has a very high sharp melting point','It softens and melts gradually over a temperature range','It contains only water molecules','It is a strong ionic crystal'], correct:1}
-];
+  {q:'How would you define an amorphous solid?', opts:['Particles arranged in a fixed lattice','Particles with no regular 3D arrangement','A solid that is always a gas','A solid that is always a liquid'], correct:1},
+  {q:'Which are examples of amorphous solids?', opts:['Ice, salt, sugar','Glass, plastic, gel','Diamond, graphite, quartz','Urea, iodine, boric acid'], correct:1},
+  {q:'The latent heat of fusion of water at 0°C is about:', opts:['539 cal/g','80 cal/g','218 cal/g','9720 cal/g'], correct:1}
+],
+medium: [
+  {q:'Why do liquids occupy a definite volume while gases don\'t?', opts:['Gases have stronger intermolecular forces','van der Waals forces bring molecules close enough to resist free expansion','Liquids have no molecules','Temperature has no effect on volume'], correct:1},
+  {q:'Why is it impossible to liquefy a gas above its critical temperature?', opts:['Pressure destroys the molecules','Kinetic energy is too high for van der Waals attraction to hold a liquid, regardless of pressure','The gas becomes solid instead','van der Waals forces increase indefinitely with pressure'], correct:1},
+  {q:'Water\'s much higher critical temperature than helium\'s implies:', opts:['Helium has stronger intermolecular attraction','Water molecules have much stronger intermolecular attraction than helium','Both have identical attraction','Neither has any intermolecular forces'], correct:1},
+  {q:'Why must an aerosol canister be kept below the propellant\'s critical temperature?', opts:['So the propellant remains a gas only','So the propellant can still exist as a liquid at achievable pressure','To raise the internal temperature indefinitely','Critical temperature has no effect on the propellant'], correct:1},
+  {q:'Why does a nonvolatile drug form a fine spray at the aerosol valve?', opts:['The propellant flashes to gas rapidly, atomizing the drug into droplets','The drug reacts chemically with the propellant','The valve grinds solid particles mechanically','Pressure plays no role in atomization'], correct:0},
+  {q:'Why have nitrogen and carbon dioxide replaced CFCs/HFCs as propellants?', opts:['They are cheaper only','They are inert gases without an ozone-depleting effect','They are more flammable substitutes','They have higher critical temperatures'], correct:1},
+  {q:'Why does ethyl chloride freeze the skin it is sprayed on?', opts:['A chemical reaction with keratin','Its rapid evaporation absorbs heat from the skin, freezing tissue','It reacts with blood proteins','It raises local skin temperature'], correct:1},
+  {q:'Why does vapor pressure in a sealed evacuated vessel eventually stabilize?', opts:['All the liquid evaporates completely','The rate of condensation equals the rate of vaporization (dynamic equilibrium)','Pressure keeps rising indefinitely','Temperature drops to absolute zero'], correct:1},
+  {q:'Why does air above a liquid slow evaporation without changing equilibrium vapor pressure?', opts:['Air reacts chemically with the vapor','Air hinders molecules leaving the surface but doesn\'t join the liquid–vapor equilibrium','Air permanently raises the liquid\'s boiling point','Air removes vapor from the system'], correct:1},
+  {q:'Which liquid in Fig. 2-5 has the lowest boiling point, implying the weakest intermolecular forces?', opts:['Water','Acetic acid','Acetone','Benzene'], correct:2},
+  {q:'Why does acetic acid have the highest boiling point of the four Fig. 2-5 liquids?', opts:['It has the weakest intermolecular forces','It has the strongest intermolecular forces (hydrogen bonding/dimerization)','It has the lowest molecular weight','It has no vapor pressure at all'], correct:1},
+  {q:'What does any single point on a Fig. 2-5 vapor-pressure curve represent?', opts:['Only the gas phase alone','Liquid and vapor coexisting in equilibrium','Solid and liquid in equilibrium','A random pressure with no physical meaning'], correct:1},
+  {q:'Per Fig. 2-5, what two changes drive a liquid entirely into the vapor state?', opts:['Increase temperature at constant pressure, or decrease pressure at constant temperature','Decrease temperature and increase pressure together','Only cooling can do this','Only adding a catalyst can do this'], correct:0},
+  {q:'Why must the Clausius–Clapeyron equation use absolute temperatures?', opts:['Because Celsius is more precise','The derivation of the temperature dependence is only valid on the Kelvin scale','It does not matter which scale is used','Absolute temperature only affects pressure readings'], correct:1},
+  {q:'Why isn\'t ΔHᵥ constant over a wide temperature range?', opts:['It increases indefinitely with temperature','It decreases with temperature and reaches zero at the critical temperature','It is always perfectly constant','It only changes below 0°C'], correct:1},
+  {q:'Why is the worked-example ΔHᵥ valid only "for this temperature range"?', opts:['ΔHᵥ changes with temperature, so it is only a good approximation over the stated interval','ΔHᵥ is a universal constant','The equation only works once, ever','ΔHᵥ equals zero exactly at 100°C'], correct:0},
+  {q:'Why does raising temperature at constant pressure eventually cause boiling?', opts:['Vapor pressure rises until it equals atmospheric pressure','Density decreases to zero','Molecules stop moving entirely','Pressure inside the liquid disappears'], correct:0},
+  {q:'Why does water boil at a lower temperature at high altitude?', opts:['Atmospheric pressure decreases, so a lower vapor pressure now matches it','Gravity is weaker at altitude','Water molecules become lighter at altitude','Oxygen content changes the boiling point'], correct:0},
+  {q:'Why does a boiling liquid\'s temperature stay constant while heat keeps being added?', opts:['Added heat only raises pressure, not temperature','All absorbed heat is used as latent heat of vaporization, until the liquid is fully vaporized','Heat is being reflected away from the liquid','Temperature always rises steadily while boiling'], correct:1},
+  {q:'Why are crystalline solids nearly incompressible, unlike gases?', opts:['Particles are tightly packed with minimal free space','Particles are far apart, as in a gas','Crystalline solids contain no particles','Crystalline solids are always liquids'], correct:0},
+  {q:'What is the key structural difference between the six crystal systems?', opts:['The color of the crystal','The number of equal axes and the angles between them (symmetry)','Melting point alone','Chemical formula alone'], correct:1},
+  {q:'Why does sodium chloride specifically form a cubic lattice?', opts:['A random arrangement of ions','Na⁺ and Cl⁻ ions of comparable size alternate along equal axes at 90°, bound by electrostatic attraction','Covalent bonds force a hexagonal shape','There is no specific reason — it is arbitrary'], correct:1},
+  {q:'What is the practical pharmaceutical significance of a drug\'s crystal lattice?', opts:['It affects color only','It affects solubility, dissolution rate, and stability','It has no pharmaceutical relevance','It only determines the drug\'s price'], correct:1},
+  {q:'Why does polymorphism matter pharmaceutically?', opts:['It has no effect on drug performance','Different polymorphs can differ in solubility/melting point, altering dissolution or activity','All polymorphs behave identically','It only affects tablet color'], correct:1},
+  {q:'Why might a metastable polymorph be risky in a marketed product?', opts:['It never changes over time','It can spontaneously convert to the stable form, changing solubility during shelf life','It is always more stable than the "stable" form','It cannot be manufactured at all'], correct:1},
+  {q:'How do diamond and graphite differ despite both being pure carbon?', opts:['They are different chemical elements','They are polymorphs — different crystal lattice arrangements of carbon','Graphite is not actually crystalline','Diamond has no lattice structure'], correct:1},
+  {q:'Why does theobroma oil melt over a narrow range despite having four polymorphs?', opts:['It consists mainly of a single glyceride, giving fairly uniform melting of the stable form','It has no polymorphs at all','It melts randomly with no consistent pattern','It is entirely amorphous'], correct:0},
+  {q:'Why does the beta form of theobroma oil suit suppository moulding?', opts:['It melts well above body temperature','Its 34–36°C range is just below body temperature, so it stays solid until inserted','It never melts, even in the body','It melts at room temperature immediately'], correct:1},
+  {q:'Why can polymorphs of a poorly soluble drug show different therapeutic activity?', opts:['Solubility/dissolution rate differs between polymorphs, affecting absorption','All polymorphs dissolve identically','Polymorphism only affects color','Polymorphism never affects a drug\'s action'], correct:0},
+  {q:'How does a solvate differ from a simple physical mixture of drug and solvent?', opts:['Solvent molecules are incorporated within the crystal lattice itself','Solvent is just mixed externally, with no lattice interaction','Solvates contain no solvent at all','Solvates are always gases'], correct:0},
+  {q:'Why is a solvate sometimes called a "pseudopolymorph"?', opts:['It behaves identically to the pure drug crystal','It shows a distinct melting point/solubility, similar to true polymorphs, due to trapped solvent','It has no effect on physical properties','It only occurs in amorphous solids'], correct:1},
+  {q:'Why are amorphous solids called "supercooled liquids"?', opts:['They boil at very low temperature','Their molecules are randomly arranged, as in a liquid, without long-range order','They only exist below 0°C','They are always cold to the touch'], correct:1},
+  {q:'Why doesn\'t an amorphous solid have a sharp melting point?', opts:['It has a perfectly ordered lattice','Lacking uniform order, different regions soften at different temperatures over a range','It never melts at all','It melts instantly at one exact temperature'], correct:1},
+  {q:'Why do ancient glass objects often look milky?', opts:['Dust accumulation only','Slow heating/cooling cycles over time allowed partial crystallization','They were always milky when made','A chemical reaction with oxygen'], correct:1},
+  {q:'Why is the normal melting point specifically defined at 1 atm?', opts:['Pressure has no effect on melting point at all','To provide a reproducible reference, since melting point can shift with pressure','1 atm is the only pressure at which solids melt','Melting point is undefined at other pressures'], correct:1},
+  {q:'In ΔT/ΔP = T(Vₗ−Vₛ)/ΔHf, a larger (Vₗ−Vₛ) indicates:', opts:['Melting point is unaffected by pressure','Melting point changes more per unit change in pressure','ΔHf becomes zero','Solid and liquid become identical'], correct:1},
+  {q:'Why is latent heat of fusion "absorbed" on melting but "liberated" on freezing?', opts:['Melting breaks the lattice (needs energy); freezing restores order (releases that energy)','Both processes always require energy input','Melting releases energy; freezing absorbs it','Energy plays no role in phase changes'], correct:0},
+  {q:'How does a propellant\'s function relate to critical temperature?', opts:['A propellant must have Tc below room temperature','A propellant must have Tc above room temperature, so pressure alone can liquefy it','Critical temperature is irrelevant to propellants','Propellants are always gases with no critical temperature'], correct:1},
+  {q:'Why must equilibrium vapor pressure be measured in an air-free (evacuated) vessel?', opts:['Air changes the color of the vapor','Air distorts the reading and slows the approach to true equilibrium vapor pressure','Air permanently increases vapor pressure','Air is required for equilibrium to occur'], correct:1},
+  {q:'What links critical temperature to ΔHᵥ becoming zero at that point?', opts:['At Tc, liquid and gas are indistinguishable, so no phase change/latent heat remains','ΔHᵥ is always zero, regardless of temperature','Critical temperature has no relation to ΔHᵥ','ΔHᵥ increases sharply exactly at Tc'], correct:0},
+  {q:'Why does the Clausius–Clapeyron equation use two temperatures, T₁ and T₂?', opts:['To calculate vapor pressure at one temperature from a known value at another','Because a single temperature cannot exist','Only to average out random errors','Because pressure never changes with temperature'], correct:0},
+  {q:'What is the key contrast between crystalline and amorphous solids?', opts:['Crystalline: ordered lattice, sharp melting point; amorphous: disordered, melts over a range','Both melt at exactly the same sharp temperature','Amorphous solids always have lower density','Crystalline solids never have a defined melting point'], correct:0},
+  {q:'Why might formulating a poorly soluble API as a metastable polymorph help bioavailability?', opts:['Metastable forms dissolve faster/more solubly, temporarily boosting absorption','Metastable forms are always the most stable ones','Metastable forms cannot dissolve at all','It has no effect on bioavailability'], correct:0},
+  {q:'Why does a liquid in an open container eventually evaporate completely without boiling?', opts:['It has some vapor pressure below boiling point, and escaping molecules aren\'t trapped, so equilibrium is never reached','Liquids in open containers never evaporate','Only boiling liquids can evaporate at all','Evaporation requires a sealed container'], correct:0},
+  {q:'Why does "normal" freezing/melting point specify exactly 1 atm?', opts:['To provide a standardized, comparable reference condition','1 atm is required for melting to occur at all','Melting point is fixed regardless of pressure','It is an arbitrary, meaningless convention'], correct:0},
+  {q:'How does molecular packing explain the incompressibility of crystalline solids?', opts:['Wide molecular spacing, as in gases','Particles already closely packed with minimal empty space','No particles are present in a crystal','Particles constantly change position randomly'], correct:1},
+  {q:'Why would a pharmaceutical scientist need to know the six crystal systems?', opts:['They have no formulation relevance at all','They influence solubility, hygroscopicity, and compressibility relevant to formulation','Only for aesthetic classification of crystals','They determine drug color exclusively'], correct:1},
+  {q:'What does "reversible change of state" mean for aerosol propellants?', opts:['The propellant permanently becomes a gas after first use','It can repeatedly cycle between liquid and gas without permanent chemical change','It changes into a different chemical each cycle','It can never return to the liquid state'], correct:1},
+  {q:'Why can\'t pressure alone liquefy a gas above its critical temperature?', opts:['Kinetic energy above Tc is too great for van der Waals forces to hold a liquid state','Pressure destroys intermolecular forces entirely','Gases become solids above Tc','There is no such limitation'], correct:0},
+  {q:'Why is the boiling-point drop with altitude explained via vapor pressure rather than temperature alone?', opts:['Boiling occurs specifically when vapor pressure equals the (now lower) atmospheric pressure','Altitude changes gravity, not pressure','Temperature is unrelated to boiling','Vapor pressure is constant everywhere'], correct:0}
+],
+hard: [
+  {q:'Using log(p₂/p₁)=ΔHᵥ(T₂−T₁)/(2.303RT₁T₂) with ΔHᵥ=9720 cal/mol, p₁=1 atm at 373 K, T₂=393 K, p₂ is approximately:', opts:['1.00 atm','1.95 atm','2.50 atm','3.00 atm'], correct:1},
+  {q:'Why does the Clausius–Clapeyron equation lose accuracy near the critical point?', opts:['The vapor is no longer dilute/ideal as liquid and vapor molar volumes converge','The equation only works below 0°C','The gas constant R changes value near Tc','Pressure becomes negative near Tc'], correct:0},
+  {q:'A propellant with Tc = 25°C is left in a car at 45°C. What happens?', opts:['It stays liquid safely','It cannot exist as a liquid at any pressure, risking canister rupture from gas expansion','It freezes solid','No change occurs at all'], correct:1},
+  {q:'What is the long-term risk of formulating a drug in its metastable polymorph?', opts:['No risk — it stays metastable forever','Spontaneous conversion to the stable, less soluble form during shelf life, altering bioavailability','It becomes more soluble over time indefinitely','It converts into a gas'], correct:1},
+  {q:'For water, where Vₗ < Vₛ (ice expands on freezing), the sign of ΔT/ΔP in the Clapeyron equation is:', opts:['Positive — melting point rises with pressure','Negative — melting point falls with pressure','Zero — pressure has no effect','Cannot be determined from the equation'], correct:1},
+  {q:'Why is water\'s ΔHᵥ lower at 180°C than at 100°C?', opts:['Liquid and vapor become more similar approaching Tc, needing less energy to interconvert','Water becomes more ordered at higher temperature','ΔHᵥ fluctuates randomly with no pattern','Pressure decreases at higher temperature'], correct:0},
+  {q:'To find the boiling point of a liquid with p=400 mmHg at 60°C and ΔHᵥ≈8000 cal/mol (target p=760 mmHg), the correct setup is:', opts:['log(760/400) = 8000(T₂−333)/(2.303×1.987×333×T₂)','p₂ = p₁ × T₂/T₁ only','ΔHᵥ is irrelevant to this calculation','T₂ = 333 K always, regardless of pressure'], correct:0},
+  {q:'Why does the melting-point Clapeyron equation lack the logarithmic term seen in the vaporization equation?', opts:['The ideal, dilute-vapor assumption doesn\'t apply, since solid and liquid have comparable molar volumes','Melting never involves any volume change','Logarithms are only used for gas-phase equations','It is simply an inconsistency in the derivation'], correct:0},
+  {q:'What is the formulation trade-off between a soluble/metastable polymorph and a stable one?', opts:['Soluble form: faster dissolution but risk of conversion; stable form: consistent but slower dissolving','Both forms behave identically in all respects','The metastable form is always the safer choice','The stable form always dissolves faster'], correct:0},
+  {q:'Why is using a single (averaged) ΔHᵥ acceptable over a 20°C interval such as 100→120°C?', opts:['ΔHᵥ changes only gradually away from the critical point, so an average is a reasonable approximation','ΔHᵥ is exactly constant everywhere, at any interval','ΔHᵥ doubles across every small interval','The size of the temperature interval never matters'], correct:0},
+  {q:'Acetic acid boils near 118°C vs. water\'s 100°C in Fig. 2-5. This reveals that acetic acid has:', opts:['Weaker intermolecular forces than water','Stronger intermolecular attraction (hydrogen-bonded dimers) than water','No measurable vapor pressure','Forces unrelated to its boiling behavior'], correct:1},
+  {q:'Why is an averaged ΔHᵥ more error-prone the closer the range is to the critical temperature?', opts:['ΔHᵥ falls nonlinearly toward zero near Tc, so an average overestimates the true value there','ΔHᵥ increases sharply as Tc is approached','Errors decrease as temperature rises toward Tc','ΔHᵥ is completely unaffected near Tc'], correct:0},
+  {q:'A propellant has Pc = 40 atm and is stored below its critical temperature. What phases coexist inside the sealed can?', opts:['Only gas','Only liquid','Both liquid and vapor, in equilibrium','Only solid'], correct:2},
+  {q:'How can the linear log p vs. 1/T relationship be used experimentally?', opts:['Plot log p vs. 1/T; the slope equals −ΔHᵥ/2.303R, giving ΔHᵥ','It cannot be used experimentally at all','It is purely theoretical and is never measured','It determines critical pressure directly'], correct:0},
+  {q:'If a drug\'s anhydrous form converts to a less-soluble hydrate during humid storage, what happens to bioavailability?', opts:['Solubility/dissolution rate falls, potentially reducing bioavailability','Solubility always increases regardless','There is no effect on the product at all','The drug automatically becomes more potent'], correct:0},
+  {q:'Why does theobroma oil\'s narrow melting range specifically suit suppository formulation?', opts:['It stays solid at storage temperature but melts quickly just below body temperature after insertion','It melts at room temperature immediately','It never melts inside the body at all','It has no defined melting range'], correct:0},
+  {q:'Why must ΔHᵥ equal exactly zero at the critical temperature?', opts:['Liquid and vapor become one indistinguishable phase, leaving no latent heat to absorb','ΔHᵥ is unrelated to phase behavior','It is simply an arbitrary convention','ΔHᵥ actually increases at Tc'], correct:0},
+  {q:'For most substances, where Vₗ > Vₛ, the Clapeyron equation predicts that increasing pressure will:', opts:['Raise the melting point','Lower the melting point','Have no effect on melting point at all','Make the melting point negative'], correct:0},
+  {q:'How do cooling and pressure each promote gas liquefaction via van der Waals forces?', opts:['Cooling reduces kinetic energy so attractions dominate; pressure forces molecules within range of the same attractions','Cooling and pressure work through entirely unrelated mechanisms','Only cooling can ever liquefy a gas','Only pressure can ever liquefy a gas'], correct:0},
+  {q:'A liquid shows unusually low vapor pressure at all temperatures. This suggests it has:', opts:['Weak intermolecular forces and a low boiling point','Strong intermolecular forces, a higher boiling point, and higher ΔHᵥ','No intermolecular forces at all','Already fully vaporized into a gas'], correct:1},
+  {q:'What is the regulatory implication of ">50% of APIs being polymorphic"?', opts:['No regulation is needed since polymorphs are identical','Regulators require identifying and controlling the specific polymorphic form used','Polymorphism is simply banned in pharmaceuticals','Only amorphous drug forms are regulated'], correct:1},
+  {q:'At high altitude, how are boiling point and equilibrium vapor pressure (at a fixed sub-boiling temperature) affected?', opts:['Both decrease with altitude','Boiling point falls; equilibrium vapor pressure at fixed temperature is unaffected by external pressure','Both remain exactly constant','Boiling point rises; vapor pressure falls'], correct:1},
+  {q:'Why can propane/butane be stored as liquids at room temperature, but methane cannot?', opts:['Propane/butane have critical temperatures above room temperature; methane\'s is below room temperature','Methane has a higher critical temperature than propane','All three gases behave identically','Only butane actually has a critical temperature'], correct:0},
+  {q:'A drug\'s amorphous form dissolves faster but recrystallizes on storage. Why do both occur?', opts:['A higher-energy disordered state dissolves easily but is thermodynamically less stable, reorganizing into the ordered crystal over time','Amorphous forms are always more stable than crystals','Recrystallization is unrelated to the amorphous solid\'s energy state','Amorphous solids cannot dissolve at all'], correct:0},
+  {q:'Why does a linear log p vs. 1/T relationship translate into a curved (not straight) p vs. T plot?', opts:['The linear relation is between log(p) and 1/T, not p and T directly, producing a nonlinear p vs. T curve','The p vs. T plot is always linear too','Logarithms have no effect on the curve\'s shape','It is only linear below 0°C'], correct:0},
+  {q:'Water\'s ΔHᵥ falls from 539 to 478 cal/g between 100°C and 180°C — roughly what percentage drop is this, and where must ΔHᵥ end up at 374°C?', opts:['About 11.3% drop, continuing to exactly zero at the critical temperature','About 50% drop, then stabilizing','No change occurs across that range','An 11.3% increase, not a drop'], correct:0},
+  {q:'Which theobroma oil polymorph should manufacturers target for suppositories, and why does tempering matter?', opts:['The gamma form; no tempering is needed','The stable beta form; tempering avoids initial solidification into unstable forms that later convert unpredictably','The alpha form, because it melts fastest','The beta prime form, as it is most common'], correct:1},
+  {q:'A hydrate loses its water of crystallization on heating, becoming anhydrous. What is this phenomenon, and what may change?', opts:['Polymer degradation, with no property changes','Pseudopolymorphism/desolvation; melting point and solubility can both change','Simple evaporation with no structural change','Ionization of the crystal lattice'], correct:1},
+  {q:'What is the mechanistic reason air lowers evaporation rate but not equilibrium vapor pressure?', opts:['Air collides with and slows escaping molecules, but equilibrium vapor pressure depends only on the liquid and temperature','Air reacts chemically with the vapor','Air raises the liquid\'s temperature','Air permanently removes vapor molecules from the system'], correct:0},
+  {q:'Why is quoting a substance\'s critical pressure alone, without its critical temperature, incomplete?', opts:['Critical pressure corresponds to one exact point paired with a specific critical temperature','Critical pressure is completely independent of temperature','Critical pressure is identical for all substances','Critical pressure always equals atmospheric pressure by definition'], correct:0},
+  {q:'What does "spontaneous" metastable-to-stable polymorphic conversion imply thermodynamically?', opts:['The stable form has lower free energy under the given conditions','The metastable form has lower free energy','Both forms have exactly identical free energy','Free energy is irrelevant to polymorphic conversion'], correct:0},
+  {q:'Across four polymorphs with increasing melting points, what solubility trend would you predict?', opts:['Lower-melting polymorphs tend to be more soluble, reflecting weaker lattice energy','Higher-melting polymorphs are always more soluble','Melting point has no relation to solubility at all','All polymorphs necessarily have identical solubility'], correct:0},
+  {q:'How does the Clapeyron equation support using high pressure and temperature to synthesize diamond from graphite?', opts:['High temperature aids atomic rearrangement; high pressure favors the denser polymorph (diamond)','Pressure plays no role in this phase transition','Only temperature matters for diamond formation','Graphite is denser than diamond, so pressure favors graphite instead'], correct:0},
+  {q:'The relation dp/dT ∝ (p×ΔHᵥ)/(RT²) means the steepness of a vapor-pressure curve near a point reflects:', opts:['Larger ΔHᵥ and vapor pressure produce a steeper slope at that temperature','Steepness that is completely unrelated to ΔHᵥ','Steepness that depends only on the gas constant R','A curve that is always perfectly straight'], correct:0},
+  {q:'Why does quality control use X-ray diffraction, not melting point alone, to confirm polymorphic identity?', opts:['Polymorphs can have overlapping melting points but unique diffraction patterns','Melting point alone is always fully sufficient','X-ray diffraction cannot actually distinguish polymorphs','Melting point and diffraction always give identical information'], correct:0},
+  {q:'Why is boiling better defined as "vapor pressure = atmospheric pressure" than as "a fixed high temperature"?', opts:['The threshold temperature depends on ambient pressure, which varies (e.g., with altitude)','Boiling always occurs at exactly 100°C everywhere on Earth','Temperature and pressure are unrelated during boiling','Vapor pressure plays no role in boiling'], correct:0},
+  {q:'What correlation would you expect between critical temperature and boiling point among the Fig. 2-5 liquids?', opts:['Higher-boiling liquids tend to have higher critical temperatures, since both reflect intermolecular force strength','No correlation exists between the two properties','Critical temperature is always lower than boiling point','Boiling point and critical temperature are entirely unrelated concepts'], correct:0},
+  {q:'Why is stating a precise "melting point" scientifically problematic for an amorphous solid?', opts:['Different regions soften at different temperatures across a range, unlike a crystalline solid\'s sharp transition','Amorphous solids never soften at all','They melt at exactly one precise temperature, like crystals','Melting point is entirely irrelevant to amorphous materials'], correct:0},
+  {q:'Why could a propellant with Tc = −10°C never work at ordinary room temperature?', opts:['Room temperature exceeds its critical temperature, so no pressure can liquefy it there','Its critical temperature is too high for any container','It reacts with oxygen specifically at room temperature','It simply has no vapor pressure at all'], correct:0},
+  {q:'How do crystalline solids, polymorphs, and solvates/hydrates relate to one another?', opts:['They are entirely unrelated, independent concepts','Crystalline solids are ordered lattices generally; polymorphism is multiple lattices of one substance; solvates/hydrates incorporate solvent within the lattice, forming a different (drug+solvent) crystal','All three terms mean exactly the same thing','Only solvates can ever be crystalline'], correct:1}
+]
+};
 
 function shuffle(arr){
   for(let i=arr.length-1;i>0;i--){
@@ -849,13 +1048,16 @@ function shuffle(arr){
 }
 
 let score = 0;
-function renderQuiz(){
+let currentQuizLevel = 'easy';
+function renderQuiz(level){
+  currentQuizLevel = level || currentQuizLevel;
+  const questions = quizQuestionsByLevel[currentQuizLevel];
   score = 0;
   document.getElementById('scoreVal').textContent = 0;
-  document.getElementById('scoreTotal').textContent = quizQuestions.length;
+  document.getElementById('scoreTotal').textContent = questions.length;
   const list = document.getElementById('quizList');
   list.innerHTML = '';
-  quizQuestions.forEach((q,qi)=>{
+  questions.forEach((q,qi)=>{
     const correctText = q.opts[q.correct];
     const shuffledOpts = shuffle(q.opts.slice());
     const newCorrectIndex = shuffledOpts.indexOf(correctText);
@@ -884,8 +1086,15 @@ function renderQuiz(){
     list.appendChild(card);
   });
 }
-document.getElementById('restartQuiz').addEventListener('click', renderQuiz);
-renderQuiz();
+document.querySelectorAll('#quizLevelTabs .level-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('#quizLevelTabs .level-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    renderQuiz(btn.dataset.level);
+  });
+});
+document.getElementById('restartQuiz').addEventListener('click', ()=>renderQuiz());
+renderQuiz('easy');
 </script>
 </body>
 </html>
